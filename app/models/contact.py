@@ -1,26 +1,11 @@
-from sqlalchemy import Column, String, Text, ForeignKey, Table, TIMESTAMP, func
+from sqlalchemy import Column, String, Text, ForeignKey, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
+from app.models.association_tables import contact_opportunities, contact_location_info
+
 
 from app.db.session import Base
-
-# Tabla intermedia para oportunidades
-contact_opportunities = Table(
-    "contact_opportunities",
-    Base.metadata,
-    Column("contact_id", UUID(as_uuid=True), ForeignKey("contact.id"), primary_key=True),
-    Column("skill_id", UUID(as_uuid=True), ForeignKey("skills.id"), primary_key=True),
-)
-
-# Tabla intermedia para info de localización
-contact_location_info = Table(
-    "contact_location_info",
-    Base.metadata,
-    Column("contact_id", UUID(as_uuid=True), ForeignKey("contact.id"), primary_key=True),
-    Column("skill_id", UUID(as_uuid=True), ForeignKey("skills.id"), primary_key=True),
-)
-
 
 class Contact(Base):
     __tablename__ = "contact"
@@ -43,8 +28,9 @@ class Contact(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
     user = relationship("User", back_populates="contact", uselist=False)
 
-    opportunities = relationship("Skill", secondary=contact_opportunities, backref="contact_opportunities")
-    location_info = relationship("Skill", secondary=contact_location_info, backref="contact_location_info")
+    opportunities = relationship("Skill", secondary=contact_opportunities, backref="opportunity_contacts")
+    locationInfo = relationship("Skill", secondary=contact_location_info, backref="location_contacts")
+
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
