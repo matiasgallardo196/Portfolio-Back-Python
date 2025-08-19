@@ -1,37 +1,41 @@
-from sqlalchemy import Column, String, Enum, ForeignKey, TIMESTAMP, func
+from sqlalchemy import Column, String, Enum, ForeignKey, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-import uuid
 import enum
 
 from app.db.session import Base
 
 
 class SkillCategory(str, enum.Enum):
-    LANGUAGES = "languages"
-    FRONTEND = "frontend"
-    BACKEND = "backend"
-    DATABASES = "databases"
-    DEVOPS = "devops"
-    INTEGRATIONS = "integrations"
-    PRACTICES = "practices"
+    languages = "languages"
+    frontend = "frontend"
+    backend = "backend"
+    databases = "databases"
+    devops = "devops"
+    integrations = "integrations"
+    practices = "practices"
 
 
 class Skill(Base):
     __tablename__ = "skills"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
 
     name = Column(String, nullable=False)
-    category = Column(Enum(SkillCategory), default=SkillCategory.PRACTICES, nullable=False)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    category = Column(
+    Enum(SkillCategory, name="skills_category_enum", create_type=False),
+    server_default=SkillCategory.practices.value,
+    nullable=False,
+)
+
+    user_id = Column("userId",UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="skills")
 
-    # Relaciones inversas desde Project y Contact (si las tenés)
-    projects = relationship("Project", secondary="project_skills", back_populates="technologies")
-    contact_opportunities = relationship("Contact", secondary="contact_opportunities", back_populates="opportunities")
-    contact_location_info = relationship("Contact", secondary="contact_location_info", back_populates="location_info")
+    project_skills = relationship("ProjectSkill", back_populates="skill")
+    contact_opportunities = relationship("ContactOpportunity", back_populates="skill")
+    contact_location_info = relationship("ContactLocationInfo", back_populates="skill")
 
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    created_at = Column("createdAt", DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column("updatedAt", DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
